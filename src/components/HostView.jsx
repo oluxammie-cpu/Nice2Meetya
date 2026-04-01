@@ -428,7 +428,7 @@ export default function HostView() {
                 },
                 {
                   label: 'Number of Tables',
-                  sub: 'How many tables at tonight's event',
+                  sub: "How many tables at tonight's event",
                   input: <input className="input" style={{ width: 80, textAlign: 'center' }}
                     type="number" min={2} max={20}
                     value={tableCount}
