@@ -2,108 +2,6 @@ import { useEffect, useRef } from 'react'
 import { PHASES } from '../lib/phases.js'
 import styles from './PublicView.module.css'
 
-function ChampagneFlutes() {
-  return (
-    <svg
-      className={styles.flutes}
-      viewBox="0 0 220 280"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <ellipse cx="110" cy="230" rx="60" ry="12" fill="rgba(201,168,76,0.07)" />
-
-      {/* LEFT FLUTE */}
-      <g opacity="0.92">
-        <path
-          d="M72 30 C68 60 62 90 58 115 C54 138 60 155 80 158 L80 218"
-          stroke="rgba(201,168,76,0.5)" strokeWidth="1" fill="none"
-        />
-        <path
-          d="M100 30 C104 60 110 90 114 115 C118 138 112 155 92 158 L92 218"
-          stroke="rgba(201,168,76,0.5)" strokeWidth="1" fill="none"
-        />
-        <path
-          d="M72 30 C68 60 62 90 58 115 C54 138 60 155 80 158 L92 158 C112 155 118 138 114 115 C110 90 104 60 100 30 Z"
-          fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.25)" strokeWidth="0.5"
-        />
-        <path
-          d="M63 110 C61 125 62 140 80 144 L92 144 C110 140 111 125 109 110 Z"
-          fill="rgba(240,208,128,0.12)"
-        />
-        <circle cx="80" cy="135" r="1.5" fill="rgba(240,208,128,0.6)">
-          <animate attributeName="cy" values="135;95;135" dur="2.8s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;0;0.6" dur="2.8s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="87" cy="125" r="1" fill="rgba(240,208,128,0.4)">
-          <animate attributeName="cy" values="125;88;125" dur="3.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.4;0;0.4" dur="3.5s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="76" cy="142" r="1" fill="rgba(240,208,128,0.35)">
-          <animate attributeName="cy" values="142;105;142" dur="2.2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.35;0;0.35" dur="2.2s" repeatCount="indefinite" />
-        </circle>
-        <line x1="86" y1="158" x2="86" y2="220" stroke="rgba(201,168,76,0.4)" strokeWidth="1.2" />
-        <path d="M72 220 Q86 216 100 220" stroke="rgba(201,168,76,0.5)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M76 36 C74 58 70 86 68 108" stroke="rgba(255,255,255,0.12)" strokeWidth="1" fill="none" strokeLinecap="round" />
-      </g>
-
-      {/* RIGHT FLUTE — tilted for clink */}
-      <g opacity="0.92" transform="rotate(7, 148, 28)">
-        <path
-          d="M122 30 C118 60 112 90 108 115 C104 138 110 155 130 158 L130 218"
-          stroke="rgba(201,168,76,0.5)" strokeWidth="1" fill="none"
-        />
-        <path
-          d="M150 30 C154 60 160 90 164 115 C168 138 162 155 142 158 L142 218"
-          stroke="rgba(201,168,76,0.5)" strokeWidth="1" fill="none"
-        />
-        <path
-          d="M122 30 C118 60 112 90 108 115 C104 138 110 155 130 158 L142 158 C162 155 168 138 164 115 C160 90 154 60 150 30 Z"
-          fill="rgba(201,168,76,0.06)" stroke="rgba(201,168,76,0.25)" strokeWidth="0.5"
-        />
-        <path
-          d="M113 110 C111 125 112 140 130 144 L142 144 C160 140 161 125 159 110 Z"
-          fill="rgba(240,208,128,0.12)"
-        />
-        <circle cx="132" cy="130" r="1.5" fill="rgba(240,208,128,0.6)">
-          <animate attributeName="cy" values="130;92;130" dur="3.1s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;0;0.6" dur="3.1s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="138" cy="142" r="1" fill="rgba(240,208,128,0.4)">
-          <animate attributeName="cy" values="142;104;142" dur="2.6s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.4;0;0.4" dur="2.6s" repeatCount="indefinite" />
-        </circle>
-        <line x1="136" y1="158" x2="136" y2="220" stroke="rgba(201,168,76,0.4)" strokeWidth="1.2" />
-        <path d="M122 220 Q136 216 150 220" stroke="rgba(201,168,76,0.5)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        <path d="M126 36 C124 58 120 86 118 108" stroke="rgba(255,255,255,0.12)" strokeWidth="1" fill="none" strokeLinecap="round" />
-      </g>
-
-      {/* Clink sparkle */}
-      <g>
-        <circle cx="108" cy="24" r="2" fill="#F0D080">
-          <animate attributeName="opacity" values="0;1;0" dur="1.9s" repeatCount="indefinite" />
-          <animate attributeName="r" values="1;2.5;1" dur="1.9s" repeatCount="indefinite" />
-        </circle>
-        <line x1="108" y1="18" x2="108" y2="12" stroke="#F0D080" strokeWidth="0.8">
-          <animate attributeName="opacity" values="0;0.7;0" dur="1.9s" repeatCount="indefinite" />
-        </line>
-        <line x1="102" y1="21" x2="97" y2="16" stroke="#F0D080" strokeWidth="0.8">
-          <animate attributeName="opacity" values="0;0.5;0" dur="1.9s" begin="0.25s" repeatCount="indefinite" />
-        </line>
-        <line x1="114" y1="21" x2="119" y2="16" stroke="#F0D080" strokeWidth="0.8">
-          <animate attributeName="opacity" values="0;0.5;0" dur="1.9s" begin="0.5s" repeatCount="indefinite" />
-        </line>
-        <line x1="100" y1="26" x2="94" y2="24" stroke="#F0D080" strokeWidth="0.6">
-          <animate attributeName="opacity" values="0;0.4;0" dur="1.9s" begin="0.1s" repeatCount="indefinite" />
-        </line>
-        <line x1="116" y1="26" x2="122" y2="24" stroke="#F0D080" strokeWidth="0.6">
-          <animate attributeName="opacity" values="0;0.4;0" dur="1.9s" begin="0.35s" repeatCount="indefinite" />
-        </line>
-      </g>
-    </svg>
-  )
-}
 
 export default function PublicView({ goGate }) {
   const bokehRef = useRef(null)
@@ -143,9 +41,7 @@ export default function PublicView({ goGate }) {
         <div className={styles.heroBg} />
         <div ref={bokehRef} className={styles.bokehLayer} />
 
-        <ChampagneFlutes />
-
-        <p className={`${styles.presenter} fade-up`}>Maison de les nobles presents</p>
+          <p className={`${styles.presenter} fade-up`}>Maison de les nobles presents</p>
         <h1 className={`${styles.wordmark} fade-up delay-1`}>
           NICE2<span>MEETYA!</span>
         </h1>
