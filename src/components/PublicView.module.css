@@ -33,6 +33,12 @@
   animation: fadeUp 1s 0.1s ease forwards;
 }
 
+.logoMark {
+  margin-bottom: 20px;
+  position: relative;
+  opacity: 0.9;
+}
+
 .presenter {
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
