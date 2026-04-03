@@ -72,7 +72,7 @@ export default function PublicView({ goGate }) {
             </h2>
           </div>
           <div className={styles.aboutBody}>
-            <p>Nice2Meetya! is a premium social evening designed to make meeting strangers feel effortless. Games are not the point — they are the permission structure. They lower the stakes, spark the first laugh, and create the conditions for real conversation.</p>
+            <p>Nice2Meetya! is an evening designed for people worth knowing to find and connect with each other effortlessly. Games are not the point — they are the permission structure. They lower the stakes, spark the first laugh, and create the conditions for real conversation.</p>
             <p>Every detail is designed: the pacing, the groupings, the pauses. So you do not have to work hard to connect — you just have to show up.</p>
             <p>You leave feeling relaxed, seen, and socially fulfilled. Not drained.</p>
           </div>
