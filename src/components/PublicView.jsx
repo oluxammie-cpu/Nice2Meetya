@@ -2,77 +2,6 @@ import { useEffect, useRef } from 'react'
 import { PHASES } from '../lib/phases.js'
 import styles from './PublicView.module.css'
 
-function HouseMark() {
-  return (
-    <svg
-      width="120"
-      height="120"
-      viewBox="0 0 120 120"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* House outline */}
-      <path
-        d="M60 18 L98 50 L98 100 L22 100 L22 50 Z"
-        stroke="rgba(201,168,76,0.85)"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Roof peak */}
-      <path
-        d="M52 18 L60 10 L68 18"
-        stroke="rgba(201,168,76,0.85)"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Feather stem */}
-      <path
-        d="M60 82 C60 82 60 48 60 44"
-        stroke="rgba(201,168,76,0.7)"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Leaf right upper */}
-      <path
-        d="M60 44 C68 46 74 52 72 60 C70 66 64 68 60 66"
-        stroke="rgba(201,168,76,0.75)"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        fill="rgba(201,168,76,0.08)"
-      />
-      {/* Leaf left upper */}
-      <path
-        d="M60 44 C52 46 46 52 48 60 C50 66 56 68 60 66"
-        stroke="rgba(201,168,76,0.75)"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        fill="rgba(201,168,76,0.08)"
-      />
-      {/* Leaf right lower */}
-      <path
-        d="M60 66 C66 68 70 74 68 80 C66 84 62 84 60 82"
-        stroke="rgba(201,168,76,0.6)"
-        strokeWidth="1"
-        strokeLinecap="round"
-        fill="rgba(201,168,76,0.05)"
-      />
-      {/* Leaf left lower */}
-      <path
-        d="M60 66 C54 68 50 74 52 80 C54 84 58 84 60 82"
-        stroke="rgba(201,168,76,0.6)"
-        strokeWidth="1"
-        strokeLinecap="round"
-        fill="rgba(201,168,76,0.05)"
-      />
-    </svg>
-  )
-}
-
 export default function PublicView({ goGate }) {
   const bokehRef = useRef(null)
 
@@ -111,24 +40,21 @@ export default function PublicView({ goGate }) {
         <div className={styles.heroBg} />
         <div ref={bokehRef} className={styles.bokehLayer} />
 
-        <div className={`${styles.logoMark} fade-up`}>
-          <HouseMark />
-        </div>
-        <p className={`${styles.presenter} fade-up delay-1`}>Maison de les nobles presents</p>
-        <h1 className={`${styles.wordmark} fade-up delay-2`}>
+        <p className={`${styles.presenter} fade-up`}>Maison de les nobles presents</p>
+        <h1 className={`${styles.wordmark} fade-up delay-1`}>
           NICE2<span>MEETYA!</span>
         </h1>
-        <p className={`${styles.tagline} fade-up delay-3`}>
+        <p className={`${styles.tagline} fade-up delay-2`}>
           Where games open doors, and conversations do the rest.
         </p>
-        <div className={`${styles.ctaRow} fade-up delay-4`}>
+        <div className={`${styles.ctaRow} fade-up delay-3`}>
           <button className="btn btn-gold" onClick={() => goGate('guest')}>
             I'm Attending Tonight
           </button>
           <button className="btn btn-ghost" onClick={() => {
             document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
           }}>
-            What is this?
+            The Experience
           </button>
         </div>
         <div className={styles.scrollLine} />
@@ -147,8 +73,8 @@ export default function PublicView({ goGate }) {
           </div>
           <div className={styles.aboutBody}>
             <p>Nice2Meetya! is a premium social evening designed to make meeting strangers feel effortless. Games are not the point — they are the permission structure. They lower the stakes, spark the first laugh, and create the conditions for real conversation.</p>
-            <p>We design every detail: the pacing, the groupings, the pauses. So you do not have to work hard to connect — you just have to show up.</p>
-            <p>Guests leave feeling relaxed, seen, and socially fulfilled. Not drained.</p>
+            <p>Every detail is designed: the pacing, the groupings, the pauses. So you do not have to work hard to connect — you just have to show up.</p>
+            <p>You leave feeling relaxed, seen, and socially fulfilled. Not drained.</p>
           </div>
         </div>
       </section>
@@ -184,7 +110,7 @@ export default function PublicView({ goGate }) {
           ))}
         </div>
         <button className="btn btn-gold" style={{ marginTop: '24px' }} onClick={() => goGate('guest')}>
-          Join the Guest List
+          Be Part of It
         </button>
       </div>
 
