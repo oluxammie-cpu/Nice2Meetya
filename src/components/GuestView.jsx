@@ -1,157 +1,188 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { PHASES } from '../lib/phases.js'
 import styles from './GuestView.module.css'
 
-export default function GuestView({ goGate }) {
-  const [event, setEvent]         = useState(null)
-  const [guestName, setGuestName] = useState('')
-  const [searched, setSearched]   = useState(false)
-  const [myAssignment, setMyAssignment] = useState(null)
-  const [lookupErr, setLookupErr] = useState('')
+function CountdownTimer({ endsAt, onComplete }) {
+  const [remaining, setRemaining] = useState(null)
+  const doneRef = useRef(false)
 
-  // Load active event and subscribe to realtime changes
+  useEffect(() => {
+    if (!endsAt) { setRemaining(null); doneRef.current = false; return }
+    doneRef.current = false
+    const tick = () => {
+      const diff = Math.max(0, Math.round((new Date(endsAt) - Date.now()) / 1000))
+      setRemaining(diff)
+      if (diff === 0 && !doneRef.current) { doneRef.current = true; onComplete && onComplete() }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [endsAt, onComplete])
+
+  if (remaining === null) return null
+  const mins = Math.floor(remaining / 60)
+  const secs = remaining % 60
+  const urgent = remaining <= 30 && remaining > 0
+  const done = remaining === 0
+
+  return (
+    <div className={`${styles.timerBanner} ${urgent ? styles.timerUrgent : ''} ${done ? styles.timerDone : ''}`}>
+      {done ? 'Time — moving on!' : `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} remaining`}
+    </div>
+  )
+}
+
+export default function GuestView() {
+  const [event, setEvent]           = useState(null)
+  const [guestName, setGuestName]   = useState('')
+  const [searched, setSearched]     = useState(false)
+  const [myData, setMyData]         = useState(null)
+  const [lookupErr, setLookupErr]   = useState('')
+
   const loadEvent = useCallback(async () => {
-    const { data } = await supabase
-      .from('events')
-      .select('*')
-      .eq('active', true)
-      .single()
+    const { data } = await supabase.from('events').select('*').eq('active', true).single()
     if (data) setEvent(data)
   }, [])
 
   useEffect(() => {
     loadEvent()
-
-    // Realtime subscription — re-fetch whenever event row changes
-    const channel = supabase
-      .channel('event-guest')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'events',
-      }, () => loadEvent())
+    const ch = supabase.channel('guest-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events' }, loadEvent)
       .subscribe()
-
-    return () => supabase.removeChannel(channel)
+    return () => supabase.removeChannel(ch)
   }, [loadEvent])
 
   async function lookupGuest() {
-    const name = guestName.trim().toLowerCase()
+    const name = guestName.trim()
     if (!name || !event) return
     setLookupErr('')
-
     const { data } = await supabase
       .from('guests')
-      .select('name, round1_table, round2_table, round3_table')
+      .select('name, round1_group, round2_group, round3_group, is_spy, spy_mission')
       .eq('event_id', event.id)
       .ilike('name', `%${name}%`)
       .limit(1)
       .single()
-
     if (!data) {
-      setLookupErr("Name not found. Try a shorter version or ask your host.")
+      setLookupErr("We don't have that name on the list. Try a shorter version, or ask your host.")
       return
     }
-    setMyAssignment(data)
+    setMyData(data)
     setSearched(true)
   }
 
-  if (!event) {
-    return (
-      <div className={styles.loading}>
-        <p className={styles.loadingText}>Connecting to tonight's event…</p>
-      </div>
-    )
-  }
+  if (!event) return (
+    <div className={styles.loading}>Connecting to tonight's event…</div>
+  )
 
-  const phase     = PHASES[event.current_phase] || PHASES[0]
-  const round     = event.current_round || 1
-  const myTable   = myAssignment ? myAssignment[`round${round}_table`] : null
+  const phase   = PHASES[event.current_phase] || PHASES[0]
+  const round   = event.current_round || 1
+  const myGroup = myData ? myData[`round${round}_group`] : null
+  const isMenti = event.menti_active
+
+  const GROUP_STYLE = {
+    'Onyx':  { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.18)', color: '#FFFFFF' },
+    'Amber': { bg: 'rgba(201,168,76,0.1)',   border: 'rgba(201,168,76,0.45)',  color: '#C9A84C' },
+    'Ivory': { bg: 'rgba(240,235,215,0.07)', border: 'rgba(240,235,215,0.25)', color: '#F0EBDC' },
+  }
+  const gs = myGroup ? (GROUP_STYLE[myGroup] || GROUP_STYLE['Amber']) : null
 
   return (
     <div className={styles.page}>
-      <div className={styles.phaseBanner}>
-        {phase.name}
-      </div>
+      <div className={styles.phaseBanner}>{phase.name}</div>
+      <CountdownTimer endsAt={event.timer_ends_at} />
 
       <div className={styles.main}>
 
         {/* NAME LOOKUP */}
         {!searched && (
-          <div className="card" style={{ marginBottom: 20, textAlign: 'center' }}>
-            <p className="eyebrow" style={{ textAlign: 'left' }}>Find your seat</p>
+          <div className={styles.card}>
+            <p className={styles.eyebrow}>Find your spot</p>
             <h2 className={styles.lookupTitle}>What's your name?</h2>
             <div className={styles.lookupRow}>
-              <input
-                className="input"
-                value={guestName}
+              <input className={styles.input} value={guestName} placeholder="Your name…" autoFocus
                 onChange={e => setGuestName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && lookupGuest()}
-                placeholder="Your name…"
-                autoFocus
-              />
-              <button className="btn btn-gold" onClick={lookupGuest}>
-                Find me
-              </button>
+                onKeyDown={e => e.key === 'Enter' && lookupGuest()} />
+              <button className={styles.btnGold} onClick={lookupGuest}>Find me</button>
             </div>
             {lookupErr && <p className={styles.lookupErr}>{lookupErr}</p>}
           </div>
         )}
 
-        {/* TABLE ASSIGNMENT */}
-        {searched && myAssignment && (
-          <div className={styles.tableCard}>
-            <div className="ornament" style={{ margin: 0 }}>
-              <p className={styles.tableEyebrow}>Round {round} · Your Table</p>
+        {/* GROUP CARD */}
+        {searched && myData && (
+          <>
+            <div className={styles.groupCard} style={gs ? { background: gs.bg, borderColor: gs.border } : {}}>
+              <div className={styles.groupCardBar} style={gs ? { background: gs.color } : {}} />
+              <p className={styles.groupEyebrow}>Round {round} — Your Group</p>
+              <div className={styles.groupName} style={gs ? { color: gs.color } : {}}>{myGroup || '—'}</div>
+              <p className={styles.groupNote}>Find your group and settle in.</p>
+              <button className={styles.btnGhost}
+                onClick={() => { setSearched(false); setMyData(null); setGuestName('') }}>
+                Not you?
+              </button>
             </div>
-            <div className={styles.tableNumber}>{myTable ?? '—'}</div>
-            <p className={styles.tableName}>
-              {myAssignment.name.split(' ')[0]}'s seat
-            </p>
-            <p className={styles.tableRoundNote}>
-              You're at Table {myTable} for Round {round}
-            </p>
-            <button
-              className={`btn btn-ghost ${styles.changeBtn}`}
-              onClick={() => { setSearched(false); setMyAssignment(null); setGuestName('') }}
-            >
-              Not you?
-            </button>
+
+            {/* SPY MISSION */}
+            {myData.is_spy && myData.spy_mission && (
+              <div className={styles.spyCard}>
+                <div className={styles.spyTop}>
+                  <span className={styles.spyBadge}>Agent</span>
+                  <span className={styles.spyTitle}>Your Secret Mission</span>
+                </div>
+                <p className={styles.spyText}>{myData.spy_mission}</p>
+                <p className={styles.spyNote}>Keep this between us. Report back to nobody.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* MENTIMETER */}
+        {isMenti && (
+          <div className={styles.mentiCard}>
+            <p className={styles.mentiLabel}>This or That — join the vote</p>
+            <p className={styles.mentiDesc}>Open Mentimeter on your phone and play along with everyone.</p>
+            <a href={event.menti_link} target="_blank" rel="noreferrer" className={styles.mentiBtn}>
+              Open Mentimeter ↗
+            </a>
           </div>
         )}
 
         {/* LIVE PROMPT */}
-        <div className={`${styles.promptCard}`}>
-          <p className={styles.promptLabel}>Tonight's Prompt</p>
-          {event.current_prompt ? (
+        {event.current_prompt ? (
+          <div className={styles.promptCard}>
+            <p className={styles.promptLabel}>Tonight's Prompt</p>
             <p className={styles.promptText}>{event.current_prompt}</p>
-          ) : (
-            <p className={styles.promptEmpty}>Waiting for tonight's prompt…</p>
-          )}
-        </div>
+          </div>
+        ) : null}
 
-        {/* CURRENT PHASE */}
-        <div className="card" style={{ marginBottom: 16 }}>
-          <p className="eyebrow">What's happening now</p>
+        {/* PHASE INFO */}
+        <div className={styles.card}>
+          <p className={styles.eyebrow}>What's happening now</p>
           <h3 className={styles.phaseTitle}>{phase.name}</h3>
           <p className={styles.phaseDesc}>{phase.desc}</p>
         </div>
 
         {/* SCHEDULE */}
         <div className={styles.scheduleCard}>
-          <div className={styles.scheduleHeader}>Tonight's Schedule</div>
+          <div className={styles.scheduleHeader}>Tonight's flow</div>
           {PHASES.map((p, i) => (
-            <div
-              key={i}
-              className={`${styles.scheduleItem}
-                ${i === event.current_phase ? styles.active : ''}
-                ${i < event.current_phase ? styles.done : ''}`}
-            >
+            <div key={i} className={`${styles.scheduleItem}
+              ${i === event.current_phase ? styles.scheduleActive : ''}
+              ${i < event.current_phase ? styles.scheduleDone : ''}`}>
               <div className={styles.scheduleDot} />
               <span className={styles.scheduleText}>{p.name}</span>
             </div>
           ))}
+        </div>
+
+        {/* WHATSAPP */}
+        <div className={styles.waCard}>
+          <p className={styles.waText}>Stay in the loop between editions</p>
+          <a href={event.whatsapp_link} target="_blank" rel="noreferrer" className={styles.waBtn}>
+            Join our WhatsApp Community ↗
+          </a>
         </div>
 
       </div>
