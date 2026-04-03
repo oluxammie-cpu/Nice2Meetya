@@ -12,15 +12,23 @@
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+}
+
+.brandText {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 22px;
   letter-spacing: 0.06em;
   color: var(--white);
-  cursor: pointer;
-  user-select: none;
+  line-height: 1;
 }
 
-.brand span { color: var(--gold); }
+.brandText span { color: var(--gold); }
 
 .right {
   display: flex;
@@ -30,4 +38,5 @@
 
 @media (max-width: 600px) {
   .nav { padding: 14px 20px; }
+  .brandText { font-size: 18px; }
 }
