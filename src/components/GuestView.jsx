@@ -78,7 +78,10 @@ export default function GuestView() {
 
   const phase   = PHASES[event.current_phase] || PHASES[0]
   const round   = event.current_round || 1
- const myGroup = myData ? myData[`round${round}_table`] : null
+const groupNames = ['Onyx', 'Amber', 'Ivory', 'Pearl']
+const myGroupIndex = myData ? myData[`round${round}_table`] : null
+const myGroup = myGroupIndex ? groupNames[myGroupIndex - 1] : null
+const myFirstName = myData ? myData.name.split(' ')[0] : ''
   const isMenti = event.menti_active
 
   const GROUP_STYLE = {
@@ -117,7 +120,7 @@ export default function GuestView() {
               <div className={styles.groupCardBar} style={gs ? { background: gs.color } : {}} />
               <p className={styles.groupEyebrow}>Round {round} — Your Group</p>
               <div className={styles.groupName} style={gs ? { color: gs.color } : {}}>{myGroup || '—'}</div>
-              <p className={styles.groupNote}>Find your group and settle in.</p>
+             <p className={styles.groupNote}>Welcome, {myFirstName}. Find your group and settle in.</p>
               <button className={styles.btnGhost}
                 onClick={() => { setSearched(false); setMyData(null); setGuestName('') }}>
                 Not you?
