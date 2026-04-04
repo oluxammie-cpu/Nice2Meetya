@@ -5,13 +5,33 @@ import GateView from './components/GateView.jsx'
 import GuestView from './components/GuestView.jsx'
 import HostView from './components/HostView.jsx'
 
+function getSession() {
+  try {
+    return JSON.parse(sessionStorage.getItem('n2my_session') || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function saveSession(data) {
+  sessionStorage.setItem('n2my_session', JSON.stringify(data))
+}
+
+function clearSession() {
+  sessionStorage.removeItem('n2my_session')
+}
+
 export default function App() {
-  const [view, setView]         = useState(() => sessionStorage.getItem('n2my_view') || 'public')
+  const session = getSession()
+  const [view, setView]         = useState(session.view || 'public')
   const [gateMode, setGateMode] = useState('guest')
 
-  // Persist view to sessionStorage whenever it changes
   useEffect(() => {
-    sessionStorage.setItem('n2my_view', view)
+    if (view === 'guest' || view === 'host') {
+      saveSession({ view })
+    } else if (view === 'public') {
+      clearSession()
+    }
   }, [view])
 
   function goGate(mode) {
@@ -20,8 +40,13 @@ export default function App() {
   }
 
   function goPublic() {
-    sessionStorage.removeItem('n2my_view')
+    clearSession()
     setView('public')
+  }
+
+  function onSuccess(newView) {
+    saveSession({ view: newView })
+    setView(newView)
   }
 
   return (
@@ -33,7 +58,7 @@ export default function App() {
         <GateView
           mode={gateMode}
           setMode={setGateMode}
-          onSuccess={setView}
+          onSuccess={onSuccess}
         />
       )}
       {view === 'guest'  && <GuestView goGate={goGate} />}
