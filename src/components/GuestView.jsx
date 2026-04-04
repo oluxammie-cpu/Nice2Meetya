@@ -3,6 +3,17 @@ import { supabase } from '../lib/supabase.js'
 import { PHASES } from '../lib/phases.js'
 import styles from './GuestView.module.css'
 
+const GROUP_NAMES = ['Onyx', 'Amber', 'Ivory', 'Pearl', 'Sage', 'Ruby']
+
+const GROUP_STYLE = {
+  'Onyx':  { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.18)', color: '#FFFFFF' },
+  'Amber': { bg: 'rgba(201,168,76,0.1)',   border: 'rgba(201,168,76,0.45)',  color: '#C9A84C' },
+  'Ivory': { bg: 'rgba(240,235,215,0.07)', border: 'rgba(240,235,215,0.25)', color: '#F0EBDC' },
+  'Pearl': { bg: 'rgba(180,200,220,0.08)', border: 'rgba(180,200,220,0.3)',  color: '#B4C8DC' },
+  'Sage':  { bg: 'rgba(140,180,140,0.08)', border: 'rgba(140,180,140,0.3)',  color: '#8CB48C' },
+  'Ruby':  { bg: 'rgba(232,41,26,0.08)',   border: 'rgba(232,41,26,0.3)',    color: '#E8291A' },
+}
+
 function CountdownTimer({ endsAt, onComplete }) {
   const [remaining, setRemaining] = useState(null)
   const doneRef = useRef(false)
@@ -34,11 +45,11 @@ function CountdownTimer({ endsAt, onComplete }) {
 }
 
 export default function GuestView() {
-  const [event, setEvent]           = useState(null)
-  const [guestName, setGuestName]   = useState('')
-  const [searched, setSearched]     = useState(false)
-  const [myData, setMyData]         = useState(null)
-  const [lookupErr, setLookupErr]   = useState('')
+  const [event, setEvent]         = useState(null)
+  const [guestName, setGuestName] = useState('')
+  const [searched, setSearched]   = useState(false)
+  const [myData, setMyData]       = useState(null)
+  const [lookupErr, setLookupErr] = useState('')
 
   const loadEvent = useCallback(async () => {
     const { data } = await supabase.from('events').select('*').eq('active', true).single()
@@ -76,23 +87,19 @@ export default function GuestView() {
     <div className={styles.loading}>Connecting to tonight's event…</div>
   )
 
-  const phase   = PHASES[event.current_phase] || PHASES[0]
-  const round   = event.current_round || 1
-const groupNames = ['Onyx', 'Amber', 'Ivory', 'Pearl']
-const groupNames = ['Onyx', 'Amber', 'Ivory', 'Pearl']
-const myGroupIndex = myData ? myData[`round${round}_table`] : null
-const myGroup = myGroupIndex ? groupNames[myGroupIndex - 1] : null
-const myFirstName = myData ? myData.name.split(' ')[0] : ''
-const myGroup = myGroupIndex ? groupNames[myGroupIndex - 1] : null
-const myFirstName = myData ? myData.name.split(' ')[0] : ''
-  const isMenti = event.menti_active
+  const phase       = PHASES[event.current_phase] || PHASES[0]
+  const round       = event.current_round || 1
+  const myGroupIndex = myData ? myData[`round${round}_table`] : null
+  const myGroup     = myGroupIndex ? GROUP_NAMES[myGroupIndex - 1] : null
+  const myFirstName = myData ? myData.name.split(' ')[0] : ''
+  const gs          = myGroup ? (GROUP_STYLE[myGroup] || GROUP_STYLE['Amber']) : null
+  const isMenti     = event.menti_active
 
-  const GROUP_STYLE = {
-    'Onyx':  { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.18)', color: '#FFFFFF' },
-    'Amber': { bg: 'rgba(201,168,76,0.1)',   border: 'rgba(201,168,76,0.45)',  color: '#C9A84C' },
-    'Ivory': { bg: 'rgba(240,235,215,0.07)', border: 'rgba(240,235,215,0.25)', color: '#F0EBDC' },
-  }
-  const gs = myGroup ? (GROUP_STYLE[myGroup] || GROUP_STYLE['Amber']) : null
+  const SPY_MISSIONS = [
+    "Discover something about one person tonight that they have never posted on social media and probably never will. Don't ask directly — let it come up naturally.",
+    "Find one person whose current life looks nothing like what they planned 10 years ago. Find out what changed. The best discoveries come through listening, not asking.",
+    "Discover one person's best mistake — the thing that went wrong and turned out to be exactly right. People love talking about this. Give them the space.",
+  ]
 
   return (
     <div className={styles.page}>
@@ -104,12 +111,17 @@ const myFirstName = myData ? myData.name.split(' ')[0] : ''
         {/* NAME LOOKUP */}
         {!searched && (
           <div className={styles.card}>
-            <p className={styles.groupNote}>Welcome, {myFirstName}. Find your group and settle in.</p>
+            <p className={styles.eyebrow}>Find your spot</p>
             <h2 className={styles.lookupTitle}>What's your name?</h2>
             <div className={styles.lookupRow}>
-              <input className={styles.input} value={guestName} placeholder="Your name…" autoFocus
+              <input
+                className={styles.input}
+                value={guestName}
+                placeholder="Your name…"
+                autoFocus
                 onChange={e => setGuestName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && lookupGuest()} />
+                onKeyDown={e => e.key === 'Enter' && lookupGuest()}
+              />
               <button className={styles.btnGold} onClick={lookupGuest}>Find me</button>
             </div>
             {lookupErr && <p className={styles.lookupErr}>{lookupErr}</p>}
@@ -123,7 +135,7 @@ const myFirstName = myData ? myData.name.split(' ')[0] : ''
               <div className={styles.groupCardBar} style={gs ? { background: gs.color } : {}} />
               <p className={styles.groupEyebrow}>Round {round} — Your Group</p>
               <div className={styles.groupName} style={gs ? { color: gs.color } : {}}>{myGroup || '—'}</div>
-             <p className={styles.groupNote}>Welcome, {myFirstName}. Find your group and settle in.</p>
+              <p className={styles.groupNote}>Welcome, {myFirstName}. Find your group and settle in.</p>
               <button className={styles.btnGhost}
                 onClick={() => { setSearched(false); setMyData(null); setGuestName('') }}>
                 Not you?
@@ -131,13 +143,13 @@ const myFirstName = myData ? myData.name.split(' ')[0] : ''
             </div>
 
             {/* SPY MISSION */}
-            {myData.is_spy && myData.spy_mission && (
+            {myData.is_spy && myData.spy_mission_index !== null && (
               <div className={styles.spyCard}>
                 <div className={styles.spyTop}>
                   <span className={styles.spyBadge}>Agent</span>
                   <span className={styles.spyTitle}>Your Secret Mission</span>
                 </div>
-                <p className={styles.spyText}>{myData.spy_mission}</p>
+                <p className={styles.spyText}>{SPY_MISSIONS[myData.spy_mission_index]}</p>
                 <p className={styles.spyNote}>Keep this between us. Report back to nobody.</p>
               </div>
             )}
@@ -149,7 +161,7 @@ const myFirstName = myData ? myData.name.split(' ')[0] : ''
           <div className={styles.mentiCard}>
             <p className={styles.mentiLabel}>This or That — join the vote</p>
             <p className={styles.mentiDesc}>Open Mentimeter on your phone and play along with everyone.</p>
-            <a href={event.menti_link} target="_blank" rel="noreferrer" className={styles.mentiBtn}>
+            <a href={event.menti_link || 'https://www.menti.com/ali66d4zwhf3'} target="_blank" rel="noreferrer" className={styles.mentiBtn}>
               Open Mentimeter ↗
             </a>
           </div>
@@ -186,7 +198,12 @@ const myFirstName = myData ? myData.name.split(' ')[0] : ''
         {/* WHATSAPP */}
         <div className={styles.waCard}>
           <p className={styles.waText}>Stay in the loop between editions</p>
-          <a href={event.whatsapp_link} target="_blank" rel="noreferrer" className={styles.waBtn}>
+          <a
+            href={event.whatsapp_link || 'https://chat.whatsapp.com/BmXCynJNcCwGR3RtUuX3DL'}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.waBtn}
+          >
             Join our WhatsApp Community ↗
           </a>
         </div>
