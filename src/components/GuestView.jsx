@@ -79,7 +79,10 @@ export default function GuestView() {
   const phase   = PHASES[event.current_phase] || PHASES[0]
   const round   = event.current_round || 1
 const groupNames = ['Onyx', 'Amber', 'Ivory', 'Pearl']
+const groupNames = ['Onyx', 'Amber', 'Ivory', 'Pearl']
 const myGroupIndex = myData ? myData[`round${round}_table`] : null
+const myGroup = myGroupIndex ? groupNames[myGroupIndex - 1] : null
+const myFirstName = myData ? myData.name.split(' ')[0] : ''
 const myGroup = myGroupIndex ? groupNames[myGroupIndex - 1] : null
 const myFirstName = myData ? myData.name.split(' ')[0] : ''
   const isMenti = event.menti_active
@@ -101,7 +104,7 @@ const myFirstName = myData ? myData.name.split(' ')[0] : ''
         {/* NAME LOOKUP */}
         {!searched && (
           <div className={styles.card}>
-            <p className={styles.eyebrow}>Find your spot</p>
+            <p className={styles.groupNote}>Welcome, {myFirstName}. Find your group and settle in.</p>
             <h2 className={styles.lookupTitle}>What's your name?</h2>
             <div className={styles.lookupRow}>
               <input className={styles.input} value={guestName} placeholder="Your name…" autoFocus
