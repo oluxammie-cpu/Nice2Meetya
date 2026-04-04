@@ -5,64 +5,49 @@ import GateView from './components/GateView.jsx'
 import GuestView from './components/GuestView.jsx'
 import HostView from './components/HostView.jsx'
 
+const SESSION_KEY = 'n2my_session'
+
 function getSession() {
-  try {
-    return JSON.parse(sessionStorage.getItem('n2my_session') || '{}')
-  } catch {
-    return {}
-  }
-}
-
-function saveSession(data) {
-  sessionStorage.setItem('n2my_session', JSON.stringify(data))
-}
-
-function clearSession() {
-  sessionStorage.removeItem('n2my_session')
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}') }
+  catch { return {} }
 }
 
 export default function App() {
-  const session = getSession()
+  const session                 = getSession()
   const [view, setView]         = useState(session.view || 'public')
   const [gateMode, setGateMode] = useState('guest')
 
-  useEffect(() => {
-    if (view === 'guest' || view === 'host') {
-      saveSession({ view })
-    } else if (view === 'public') {
-      clearSession()
+  function persist(v) {
+    if (v === 'guest' || v === 'host') {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ view: v }))
+    } else {
+      sessionStorage.removeItem(SESSION_KEY)
     }
-  }, [view])
+  }
 
   function goGate(mode) {
     setGateMode(mode)
     setView('gate')
+    sessionStorage.removeItem(SESSION_KEY)
   }
 
   function goPublic() {
-    clearSession()
+    sessionStorage.removeItem(SESSION_KEY)
     setView('public')
   }
 
-  function onSuccess(newView) {
-    saveSession({ view: newView })
-    setView(newView)
+  function onSuccess(v) {
+    persist(v)
+    setView(v)
   }
 
   return (
     <>
       <Nav view={view} goGate={goGate} goPublic={goPublic} />
-
       {view === 'public' && <PublicView goGate={goGate} />}
-      {view === 'gate'   && (
-        <GateView
-          mode={gateMode}
-          setMode={setGateMode}
-          onSuccess={onSuccess}
-        />
-      )}
+      {view === 'gate'   && <GateView mode={gateMode} setMode={setGateMode} onSuccess={onSuccess} />}
       {view === 'guest'  && <GuestView goGate={goGate} />}
-      {view === 'host'   && <HostView  goPublic={goPublic} />}
+      {view === 'host'   && <HostView goPublic={goPublic} />}
     </>
   )
 }
