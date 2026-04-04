@@ -136,19 +136,22 @@ export default function HostView() {
     showToast(`Round ${round} shuffled`)
   }
 
-  async function addGuest() {
+ async function addGuest() {
     const name = newGuest.trim()
     if (!name || !event) return
-    const groups = event.group_names || ['Onyx', 'Amber', 'Ivory']
-    const idx = guests.length
-    const { data } = await supabase.from('guests').insert({
-      event_id: event.id, name,
-      round1_group: groups[idx % groups.length],
-      round2_group: groups[idx % groups.length],
-      round3_group: groups[idx % groups.length],
-    }).select().single()
-    if (data) { setGuests(gs => [...gs, data].sort((a,b) => a.name.localeCompare(b.name))); setNewGuest('') }
-    showToast(`${name} added`)
+    const { data, error } = await supabase
+      .from('guests')
+      .insert({ event_id: event.id, name, round1_table: 1, round2_table: 2, round3_table: 3, is_spy: false })
+      .select().single()
+    if (error) {
+      alert('Error adding guest: ' + error.message + ' | Code: ' + error.code)
+      return
+    }
+    if (data) {
+      setGuests(gs => [...gs, data].sort((a, b) => a.name.localeCompare(b.name)))
+      setNewGuest('')
+      showToast(`${name} added`)
+    }
   }
 
   async function removeGuest(id) {
