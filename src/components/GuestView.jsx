@@ -59,7 +59,7 @@ export default function GuestView() {
     setLookupErr('')
     const { data } = await supabase
       .from('guests')
-      .select('name, round1_group, round2_group, round3_group, is_spy, spy_mission')
+      .select('name, round1_table, round2_table, round3_table, is_spy, spy_mission_index')
       .eq('event_id', event.id)
       .ilike('name', `%${name}%`)
       .limit(1)
@@ -78,7 +78,7 @@ export default function GuestView() {
 
   const phase   = PHASES[event.current_phase] || PHASES[0]
   const round   = event.current_round || 1
-  const myGroup = myData ? myData[`round${round}_group`] : null
+ const myGroup = myData ? myData[`round${round}_table`] : null
   const isMenti = event.menti_active
 
   const GROUP_STYLE = {
