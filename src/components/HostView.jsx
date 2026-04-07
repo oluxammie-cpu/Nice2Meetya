@@ -33,6 +33,8 @@ export default function HostView() {
   const [hostTimeLeft, setHostTimeLeft] = useState(null)
   const [optimising, setOptimising] = useState(false)
   const [coverage, setCoverage]     = useState(null)
+  const [archives, setArchives]     = useState([])
+  const [archiving, setArchiving]   = useState(false)
 
   const [guestCode, setGuestCode]         = useState('')
   const [hostCode, setHostCode]           = useState('')
@@ -61,6 +63,13 @@ export default function HostView() {
     const { data: gList } = await supabase
       .from('guests').select('*').eq('event_id', ev.id).order('name')
     setGuests(gList || [])
+
+    // Load archives
+    const { data: archList } = await supabase
+      .from('event_archives')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setArchives(archList || [])
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
@@ -261,6 +270,67 @@ export default function HostView() {
     showToast('Settings saved')
   }
 
+  async function archiveAndReset(hardReset = false) {
+    if (!event) return
+    const confirmed = window.confirm(
+      hardReset
+        ? `Archive ${event.edition || 'this event'} and wipe the guest list for a fresh start?`
+        : `Archive ${event.edition || 'this event'} and reset tonight's state? Guest list will be kept.`
+    )
+    if (!confirmed) return
+    setArchiving(true)
+
+    // Build guest snapshot
+    const guestsSnapshot = guests.map(g => ({
+      name: g.name,
+      round1: groupNames[g.round1_table - 1] || '',
+      round2: groupNames[g.round2_table - 1] || '',
+      round3: groupNames[g.round3_table - 1] || '',
+      is_spy: g.is_spy,
+    }))
+
+    // Save archive
+    const { error: archErr } = await supabase.from('event_archives').insert({
+      edition: event.edition || 'Untitled',
+      event_date: new Date().toISOString().split('T')[0],
+      guest_count: guests.length,
+      group_names: event.group_names || '',
+      guest_code: event.guest_code || '',
+      guests_json: guestsSnapshot,
+    })
+
+    if (archErr) { showToast('Archive failed: ' + archErr.message); setArchiving(false); return }
+
+    // Reset event state
+    await supabase.from('events').update({
+      current_phase: 0,
+      current_round: 1,
+      current_prompt: '',
+      timer_ends_at: null,
+      menti_active: false,
+    }).eq('id', event.id)
+
+    // Hard reset — wipe guests
+    if (hardReset) {
+      await supabase.from('guests').delete().eq('event_id', event.id)
+    }
+
+    await loadAll()
+    setArchiving(false)
+    showToast(`${event.edition || 'Event'} archived${hardReset ? ' and guest list cleared' : ''}`)
+  }
+
+  function downloadArchiveCSV(archive) {
+    const guests = archive.guests_json || []
+    const headers = ['Guest', 'Round 1', 'Round 2', 'Round 3', 'Spy']
+    const rows = guests.map(g => [g.name, g.round1, g.round2, g.round3, g.is_spy ? 'Yes' : 'No'])
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    a.download = `nice2meetya-${archive.edition}-${archive.event_date}.csv`
+    a.click()
+  }
+
   function exportCSV() {
     const headers = ['Guest', 'Round 1', 'Round 2', 'Round 3', 'Spy', 'Mission']
     const rows = guests.map(g => [
@@ -327,6 +397,7 @@ export default function HostView() {
           { key: 'spies',    icon: '◉', label: 'Spy Missions' },
           { key: 'guests',   icon: '◇', label: 'Guest List' },
           { key: 'settings', icon: '◆', label: 'Settings' },
+          { key: 'archives', icon: '◫', label: 'Archives' },
         ].map(item => (
           <div key={item.key}
             className={`${styles.navItem} ${tab === item.key ? styles.navActive : ''}`}
@@ -654,6 +725,68 @@ export default function HostView() {
             <button className="btn btn-gold" onClick={saveSettings} style={{ marginTop: 20 }}>
               Save All Settings
             </button>
+
+            <div className={styles.resetBlock}>
+              <div className={styles.resetTitle}>Archive & Reset</div>
+              <div className={styles.resetSub}>
+                Both options archive the current edition before resetting. The archive is always saved first.
+              </div>
+              <div className={styles.resetBtns}>
+                <button
+                  className={styles.resetSoftBtn}
+                  onClick={() => archiveAndReset(false)}
+                  disabled={archiving}
+                >
+                  {archiving ? 'Archiving…' : 'Archive & Soft Reset'}
+                  <span className={styles.resetBtnSub}>Keeps guest list · resets phase, round, prompt, timer</span>
+                </button>
+                <button
+                  className={styles.resetHardBtn}
+                  onClick={() => archiveAndReset(true)}
+                  disabled={archiving}
+                >
+                  {archiving ? 'Archiving…' : 'Archive & Full Reset'}
+                  <span className={styles.resetBtnSub}>Wipes guest list · fresh start for new edition</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'archives' && (
+          <div>
+            <div className={styles.pageHeader}>
+              <h2 className={styles.tabTitle}>Archives</h2>
+              <p className={styles.tabSub}>{archives.length} past edition{archives.length !== 1 ? 's' : ''} on record.</p>
+            </div>
+
+            {archives.length === 0 ? (
+              <div className={styles.emptyArchives}>
+                <p>No archives yet. After your first event, use Archive & Reset in Settings to save it here.</p>
+              </div>
+            ) : (
+              <div className={styles.archiveList}>
+                {archives.map(a => (
+                  <div key={a.id} className={styles.archiveCard}>
+                    <div className={styles.archiveLeft}>
+                      <div className={styles.archiveEdition}>{a.edition}</div>
+                      <div className={styles.archiveMeta}>
+                        {new Date(a.event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {' · '}
+                        {a.guest_count} guests
+                        {a.group_names ? ` · ${a.group_names.split(',').length} groups` : ''}
+                      </div>
+                    </div>
+                    <button
+                      className={styles.archiveDownload}
+                      onClick={() => downloadArchiveCSV(a)}
+                    >
+                      Download CSV
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
