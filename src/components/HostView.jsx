@@ -328,12 +328,18 @@ export default function HostView() {
     if (archErr) { showToast('Archive failed: ' + archErr.message); setArchiving(false); return }
 
     // Reset event state
+    const defaultMissions = [
+      { title: 'The Untold Story', brief: "Discover something about one person tonight that they have never posted on social media and probably never will. Don't ask directly — let it come up naturally." },
+      { title: 'The Plot Twist', brief: "Find one person whose current life looks nothing like what they planned 10 years ago. Find out what changed. The best discoveries come through listening, not asking." },
+      { title: 'The Best Mistake', brief: "Discover one person's best mistake — the thing that went wrong and turned out to be exactly right. People love talking about this. Give them the space." },
+    ]
     await supabase.from('events').update({
       current_phase: 0,
       current_round: 1,
       current_prompt: '',
       timer_ends_at: null,
       menti_active: false,
+      ...(hardReset ? { spy_missions: JSON.stringify(defaultMissions) } : {}),
     }).eq('id', event.id)
 
     // Hard reset — wipe guests
@@ -762,9 +768,8 @@ export default function HostView() {
                       placeholder="Mission title"
                       value={m.title}
                       onChange={e => {
-                        const updated = [...spyMissions]
-                        updated[mi] = { ...updated[mi], title: e.target.value }
-                        setSpyMissions(updated)
+                        const v = e.target.value
+                        setSpyMissions(prev => prev.map((x, i) => i === mi ? { ...x, title: v } : x))
                       }}
                     />
                     <textarea
@@ -773,13 +778,26 @@ export default function HostView() {
                       placeholder="Mission brief shown to the spy…"
                       value={m.brief}
                       onChange={e => {
-                        const updated = [...spyMissions]
-                        updated[mi] = { ...updated[mi], brief: e.target.value }
-                        setSpyMissions(updated)
+                        const v = e.target.value
+                        setSpyMissions(prev => prev.map((x, i) => i === mi ? { ...x, brief: v } : x))
                       }}
                     />
+                    <button
+                      className="btn btn-red btn-sm"
+                      onClick={() => setSpyMissions(prev => prev.filter((_, i) => i !== mi))}
+                    >
+                      Remove Mission
+                    </button>
                   </div>
                 ))}
+                <div style={{ padding: '12px 24px' }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setSpyMissions(prev => [...(prev || []), { title: 'New Mission', brief: 'Describe the mission here…' }])}
+                  >
+                    + Add Mission
+                  </button>
+                </div>
               </div>
 
               <div className={styles.settingsGroup}>
