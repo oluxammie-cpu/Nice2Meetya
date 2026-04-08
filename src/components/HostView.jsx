@@ -65,7 +65,10 @@ export default function HostView() {
     setMentiPresenterLink(ev.menti_presenter_link || '')
     setWaLink(ev.whatsapp_link || '')
     if (ev.spy_missions) {
-      try { setSpyMissions(JSON.parse(ev.spy_missions)) } catch {}
+      try {
+        const parsed = JSON.parse(ev.spy_missions)
+        if (Array.isArray(parsed) && parsed.length > 0) setSpyMissions(parsed)
+      } catch {}
     }
     const { data: gList } = await supabase
       .from('guests').select('*').eq('event_id', ev.id).order('name')
@@ -224,7 +227,7 @@ export default function HostView() {
     }).eq('id', guestId)
     setGuests(gs => gs.map(g => g.id === guestId
       ? { ...g, is_spy: isSpy, spy_mission_index: isSpy ? missionIdx : null } : g))
-    showToast(isSpy ? `Mission: ${SPY_MISSIONS[missionIdx].title}` : 'Spy role removed')
+    showToast(isSpy ? `Mission: ${spyMissions[missionIdx]?.title || ''}` : 'Spy role removed')
   }
 
   async function addGuest() {
@@ -362,7 +365,7 @@ export default function HostView() {
       groupNames[g.round2_table - 1] || '',
       groupNames[g.round3_table - 1] || '',
       g.is_spy ? 'Yes' : 'No',
-      g.is_spy && g.spy_mission_index !== null ? SPY_MISSIONS[g.spy_mission_index].title : '',
+      g.is_spy && g.spy_mission_index !== null ? (spyMissions[g.spy_mission_index]?.title || '') : '',
     ])
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
     const a = document.createElement('a')
@@ -641,7 +644,7 @@ export default function HostView() {
             </div>
 
             <div className={styles.missionCards}>
-              {SPY_MISSIONS.map((m, mi) => {
+              {(spyMissions || []).map((m, mi) => {
                 const spy = guests.find(g => g.is_spy && g.spy_mission_index === mi)
                 return (
                   <div key={mi} className={`${styles.missionCard} ${spy ? styles.missionAssigned : ''}`}>
@@ -666,7 +669,7 @@ export default function HostView() {
                     disabled={g.is_spy}
                     onChange={e => e.target.value !== '' && toggleSpy(g.id, true, parseInt(e.target.value))}>
                     <option value="">— none —</option>
-                    {SPY_MISSIONS.map((m, mi) => (
+                    {(spyMissions || []).map((m, mi) => (
                       <option key={mi} value={mi}>{m.title}</option>
                     ))}
                   </select>
@@ -750,7 +753,7 @@ export default function HostView() {
 
               <div className={styles.settingsGroup}>
                 <div className={styles.settingsGroupTitle}>Spy Missions</div>
-                {spyMissions.map((m, mi) => (
+                {(spyMissions || []).map((m, mi) => (
                   <div key={mi} className={styles.settingsRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                     <div className={styles.settingsLabel}>Mission {mi + 1}</div>
                     <input
