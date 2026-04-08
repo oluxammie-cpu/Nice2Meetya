@@ -64,12 +64,6 @@ export default function HostView() {
     setMentiLink(ev.menti_link || '')
     setMentiPresenterLink(ev.menti_presenter_link || '')
     setWaLink(ev.whatsapp_link || '')
-    if (ev.spy_missions) {
-      try {
-        const parsed = JSON.parse(ev.spy_missions)
-        if (Array.isArray(parsed) && parsed.length > 0) setSpyMissions(parsed)
-      } catch {}
-    }
     const { data: gList } = await supabase
       .from('guests').select('*').eq('event_id', ev.id).order('name')
     setGuests(gList || [])
@@ -83,6 +77,20 @@ export default function HostView() {
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
+
+  // Load spy missions once on mount only — not on realtime updates
+  // so in-progress edits are never overwritten
+  useEffect(() => {
+    supabase.from('events').select('spy_missions').eq('active', true).single()
+      .then(({ data }) => {
+        if (data?.spy_missions) {
+          try {
+            const parsed = JSON.parse(data.spy_missions)
+            if (Array.isArray(parsed) && parsed.length > 0) setSpyMissions(parsed)
+          } catch {}
+        }
+      })
+  }, []) // empty deps = runs once only
 
   // Screen mode gets its own independent realtime subscription
   useEffect(() => {
