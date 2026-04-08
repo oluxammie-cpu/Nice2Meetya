@@ -1,0 +1,90 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '../lib/supabase.js'
+import { PHASES } from '../lib/phases.js'
+import styles from './ScreenMode.module.css'
+
+function useCountdown(endsAt) {
+  const [remaining, setRemaining] = useState(null)
+  useEffect(() => {
+    if (!endsAt) { setRemaining(null); return }
+    const tick = () => {
+      const diff = Math.max(0, Math.ceil((new Date(endsAt) - Date.now()) / 1000))
+      setRemaining(diff)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [endsAt])
+  return remaining
+}
+
+export default function ScreenMode({ onExit }) {
+  const [event, setEvent] = useState(null)
+
+  const loadEvent = useCallback(async () => {
+    const { data } = await supabase
+      .from('events').select('*').eq('active', true).single()
+    if (data) setEvent(data)
+  }, [])
+
+  useEffect(() => {
+    loadEvent()
+    const ch = supabase.channel('screen-mode-realtime')
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'events'
+      }, payload => {
+        setEvent(prev => ({ ...prev, ...payload.new }))
+      })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [loadEvent])
+
+  const timeLeft = useCountdown(event?.timer_ends_at)
+
+  function formatTime(s) {
+    if (s === null || s === undefined) return null
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  }
+
+  if (!event) return (
+    <div className={styles.loading}>Connecting…</div>
+  )
+
+  const phase = PHASES[event.current_phase] || PHASES[0]
+  const mentiCode = (event.menti_link || '')
+    .replace('https://www.menti.com/', '')
+    .replace('https://menti.com/', '')
+  const timerUrgent = timeLeft !== null && timeLeft <= 30 && timeLeft > 0
+
+  return (
+    <div className={styles.screen}>
+      <button className={styles.exit} onClick={onExit}>Exit</button>
+
+      <div className={styles.brand}>NICE2<span>MEETYA!</span></div>
+
+      <div className={styles.phase}>{phase.name}</div>
+
+      {event.current_prompt ? (
+        <div className={styles.prompt}>{event.current_prompt}</div>
+      ) : null}
+
+      {event.menti_active && (
+        <div className={styles.menti}>
+          <div className={styles.mentiSub}>Open Mentimeter to vote</div>
+          <div className={styles.mentiUrl}>menti.com</div>
+          {mentiCode && <div className={styles.mentiCode}>{mentiCode}</div>}
+        </div>
+      )}
+
+      {timeLeft !== null && timeLeft > 0 && (
+        <div className={`${styles.timer} ${timerUrgent ? styles.timerUrgent : ''}`}>
+          {formatTime(timeLeft)}
+        </div>
+      )}
+
+      {timeLeft === 0 && (
+        <div className={styles.timerDone}>Time</div>
+      )}
+    </div>
+  )
+}
