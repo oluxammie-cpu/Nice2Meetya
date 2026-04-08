@@ -40,8 +40,9 @@ export default function HostView() {
   const [hostCode, setHostCode]           = useState('')
   const [edition, setEdition]             = useState('')
   const [groupNamesRaw, setGroupNamesRaw] = useState('')
-  const [mentiLink, setMentiLink]         = useState('')
-  const [waLink, setWaLink]               = useState('')
+  const [mentiLink, setMentiLink]                 = useState('')
+  const [mentiPresenterLink, setMentiPresenterLink] = useState('')
+  const [waLink, setWaLink]                       = useState('')
 
   const showToast = (msg, duration = 2800) => {
     setToast(msg)
@@ -59,6 +60,7 @@ export default function HostView() {
     setEdition(ev.edition || '')
     setGroupNamesRaw(ev.group_names || 'Onyx,Amber,Ivory,Pearl')
     setMentiLink(ev.menti_link || '')
+    setMentiPresenterLink(ev.menti_presenter_link || '')
     setWaLink(ev.whatsapp_link || '')
     const { data: gList } = await supabase
       .from('guests').select('*').eq('event_id', ev.id).order('name')
@@ -263,6 +265,7 @@ export default function HostView() {
       edition: edition.trim(),
       group_names: groupNamesRaw.trim(),
       menti_link: mentiLink.trim(),
+      menti_presenter_link: mentiPresenterLink.trim(),
       whatsapp_link: waLink.trim(),
     }).eq('id', event.id)
     if (error) { showToast('Save failed: ' + error.message); return }
@@ -465,11 +468,23 @@ export default function HostView() {
 
               <div className={styles.commandUnit}>
                 <div className={styles.commandLabel}>Mentimeter</div>
-                <button
-                  className={`${styles.mentiToggle} ${event.menti_active ? styles.mentiToggleOn : ''}`}
-                  onClick={() => toggleMenti(!event.menti_active)}>
-                  {event.menti_active ? 'Live ●' : 'Off ○'}
-                </button>
+                <div className={styles.mentiControls}>
+                  <button
+                    className={`${styles.mentiToggle} ${event.menti_active ? styles.mentiToggleOn : ''}`}
+                    onClick={() => toggleMenti(!event.menti_active)}>
+                    {event.menti_active ? 'Live ●' : 'Off ○'}
+                  </button>
+                  {event.menti_presenter_link && (
+                    <a
+                      href={event.menti_presenter_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.presenterBtn}
+                    >
+                      Open Presenter View ↗
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -712,8 +727,12 @@ export default function HostView() {
               <div className={styles.settingsGroup}>
                 <div className={styles.settingsGroupTitle}>Links</div>
                 <div className={styles.settingsRow}>
-                  <div className={styles.settingsLabel}>Mentimeter Link <span className={styles.settingsSub}>Update each edition</span></div>
+                  <div className={styles.settingsLabel}>Mentimeter Voting Link <span className={styles.settingsSub}>Guests use this to vote</span></div>
                   <input className="input" style={{ width: 280 }} value={mentiLink} onChange={e => setMentiLink(e.target.value)} />
+                </div>
+                <div className={styles.settingsRow}>
+                  <div className={styles.settingsLabel}>Mentimeter Presenter Link <span className={styles.settingsSub}>Open this on the venue screen to show live results</span></div>
+                  <input className="input" style={{ width: 280 }} value={mentiPresenterLink} onChange={e => setMentiPresenterLink(e.target.value)} />
                 </div>
                 <div className={styles.settingsRow}>
                   <div className={styles.settingsLabel}>WhatsApp Link <span className={styles.settingsSub}>Community invite</span></div>
