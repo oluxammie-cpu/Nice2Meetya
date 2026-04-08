@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { PHASES } from '../lib/phases.js'
 import { optimiseRotations, roundsToAssignments, calculateCoverage } from '../lib/rotation.js'
+import ScreenMode from './ScreenMode.jsx'
 import styles from './HostView.module.css'
 
 const PROMPT_PRESETS = [
@@ -356,31 +357,7 @@ export default function HostView() {
   const timerRunning = event.timer_ends_at && hostTimeLeft !== null && hostTimeLeft > 0
 
   if (screenMode) {
-    const phase = PHASES[event.current_phase] || PHASES[0]
-    return (
-      <div className={styles.screenMode}>
-        <button className={styles.exitScreen} onClick={() => setScreenMode(false)}>Exit</button>
-        <div className={styles.screenBrand}>NICE2<span>MEETYA!</span></div>
-        <div className={styles.screenPhase}>{phase.name}</div>
-        {event.current_prompt && (
-          <div className={styles.screenPrompt}>{event.current_prompt}</div>
-        )}
-        {event.menti_active && (
-          <div className={styles.screenMenti}>
-            <div className={styles.screenMentiSub}>Open Mentimeter to vote</div>
-            <div className={styles.screenMentiUrl}>menti.com</div>
-            <div className={styles.screenMentiCode}>
-              {(event.menti_link || '').replace('https://www.menti.com/', '').replace('https://menti.com/', '')}
-            </div>
-          </div>
-        )}
-        {hostTimeLeft !== null && hostTimeLeft > 0 && (
-          <div className={`${styles.screenTimer} ${hostTimeLeft <= 30 ? styles.screenTimerUrgent : ''}`}>
-            {formatTime(hostTimeLeft)}
-          </div>
-        )}
-      </div>
-    )
+    return <ScreenMode onExit={() => setScreenMode(false)} />
   }
 
   return (
