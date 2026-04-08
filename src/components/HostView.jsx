@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { PHASES } from '../lib/phases.js'
 import { optimiseRotations, roundsToAssignments, calculateCoverage } from '../lib/rotation.js'
-import ScreenMode from './ScreenMode.jsx'
 import styles from './HostView.module.css'
 
 const PROMPT_PRESETS = [
@@ -16,11 +15,7 @@ const PROMPT_PRESETS = [
   "What does your ideal Saturday look like?",
 ]
 
-const SPY_MISSIONS = [
-  { title: 'The Untold Story', brief: "Discover something about one person tonight that they have never posted on social media and probably never will. Don't ask directly — let it come up naturally." },
-  { title: 'The Plot Twist', brief: "Find one person whose current life looks nothing like what they planned 10 years ago. Find out what changed. The best discoveries come through listening, not asking." },
-  { title: 'The Best Mistake', brief: "Discover one person's best mistake — the thing that went wrong and turned out to be exactly right. People love talking about this. Give them the space." },
-]
+// Spy missions are loaded from the database (editable via Settings)
 
 export default function HostView() {
   const [tab, setTab]               = useState(() => sessionStorage.getItem('n2my_host_tab') || 'tonight')
@@ -30,12 +25,18 @@ export default function HostView() {
   const [newGuest, setNewGuest]     = useState('')
   const [toast, setToast]           = useState('')
   const [screenMode, setScreenMode] = useState(false)
+  const [screenEvent, setScreenEvent] = useState(null)
   const [timerMins, setTimerMins]   = useState(10)
   const [hostTimeLeft, setHostTimeLeft] = useState(null)
   const [optimising, setOptimising] = useState(false)
   const [coverage, setCoverage]     = useState(null)
   const [archives, setArchives]     = useState([])
   const [archiving, setArchiving]   = useState(false)
+  const [spyMissions, setSpyMissions] = useState([
+    { title: 'The Untold Story', brief: "Discover something about one person tonight that they have never posted on social media and probably never will. Don't ask directly — let it come up naturally." },
+    { title: 'The Plot Twist', brief: "Find one person whose current life looks nothing like what they planned 10 years ago. Find out what changed. The best discoveries come through listening, not asking." },
+    { title: 'The Best Mistake', brief: "Discover one person's best mistake — the thing that went wrong and turned out to be exactly right. People love talking about this. Give them the space." },
+  ])
 
   const [guestCode, setGuestCode]         = useState('')
   const [hostCode, setHostCode]           = useState('')
@@ -63,6 +64,9 @@ export default function HostView() {
     setMentiLink(ev.menti_link || '')
     setMentiPresenterLink(ev.menti_presenter_link || '')
     setWaLink(ev.whatsapp_link || '')
+    if (ev.spy_missions) {
+      try { setSpyMissions(JSON.parse(ev.spy_missions)) } catch {}
+    }
     const { data: gList } = await supabase
       .from('guests').select('*').eq('event_id', ev.id).order('name')
     setGuests(gList || [])
@@ -76,6 +80,20 @@ export default function HostView() {
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
+
+  // Screen mode gets its own independent realtime subscription
+  useEffect(() => {
+    if (!screenMode) { setScreenEvent(null); return }
+    // Load fresh event data for screen
+    supabase.from('events').select('*').eq('active', true).single()
+      .then(({ data }) => { if (data) setScreenEvent(data) })
+    const ch = supabase.channel('screen-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events' }, payload => {
+        setScreenEvent(prev => ({ ...prev, ...payload.new }))
+      })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [screenMode])
 
   useEffect(() => {
     if (!event) return
@@ -268,6 +286,7 @@ export default function HostView() {
       menti_link: mentiLink.trim(),
       menti_presenter_link: mentiPresenterLink.trim(),
       whatsapp_link: waLink.trim(),
+      spy_missions: JSON.stringify(spyMissions),
     }).eq('id', event.id)
     if (error) { showToast('Save failed: ' + error.message); return }
     await loadAll()
@@ -357,7 +376,35 @@ export default function HostView() {
   const timerRunning = event.timer_ends_at && hostTimeLeft !== null && hostTimeLeft > 0
 
   if (screenMode) {
-    return <ScreenMode onExit={() => setScreenMode(false)} />
+    const se = screenEvent || event
+    const phase = PHASES[se?.current_phase] || PHASES[0]
+    const screenTimeLeft = se?.timer_ends_at
+      ? Math.max(0, Math.ceil((new Date(se.timer_ends_at) - Date.now()) / 1000))
+      : null
+    const mentiCode = (se?.menti_link || '')
+      .replace('https://www.menti.com/', '').replace('https://menti.com/', '')
+    return (
+      <div className={styles.screenMode}>
+        <button className={styles.exitScreen} onClick={() => setScreenMode(false)}>Exit</button>
+        <div className={styles.screenBrand}>NICE2<span>MEETYA!</span></div>
+        <div className={styles.screenPhase}>{phase.name}</div>
+        {se?.current_prompt && (
+          <div className={styles.screenPrompt}>{se.current_prompt}</div>
+        )}
+        {se?.menti_active && (
+          <div className={styles.screenMenti}>
+            <div className={styles.screenMentiSub}>Open Mentimeter to vote</div>
+            <div className={styles.screenMentiUrl}>menti.com</div>
+            {mentiCode && <div className={styles.screenMentiCode}>{mentiCode}</div>}
+          </div>
+        )}
+        {screenTimeLeft !== null && screenTimeLeft > 0 && (
+          <div className={`${styles.screenTimer} ${screenTimeLeft <= 30 ? styles.screenTimerUrgent : ''}`}>
+            {formatTime(screenTimeLeft)}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -702,7 +749,37 @@ export default function HostView() {
               </div>
 
               <div className={styles.settingsGroup}>
-                <div className={styles.settingsGroupTitle}>Links</div>
+                <div className={styles.settingsGroupTitle}>Spy Missions</div>
+                {spyMissions.map((m, mi) => (
+                  <div key={mi} className={styles.settingsRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <div className={styles.settingsLabel}>Mission {mi + 1}</div>
+                    <input
+                      className="input"
+                      style={{ width: '100%' }}
+                      placeholder="Mission title"
+                      value={m.title}
+                      onChange={e => {
+                        const updated = [...spyMissions]
+                        updated[mi] = { ...updated[mi], title: e.target.value }
+                        setSpyMissions(updated)
+                      }}
+                    />
+                    <textarea
+                      className="input"
+                      style={{ width: '100%', minHeight: 72, resize: 'vertical', fontStyle: 'italic' }}
+                      placeholder="Mission brief shown to the spy…"
+                      value={m.brief}
+                      onChange={e => {
+                        const updated = [...spyMissions]
+                        updated[mi] = { ...updated[mi], brief: e.target.value }
+                        setSpyMissions(updated)
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.settingsGroup}>
                 <div className={styles.settingsRow}>
                   <div className={styles.settingsLabel}>Mentimeter Voting Link <span className={styles.settingsSub}>Guests use this to vote</span></div>
                   <input className="input" style={{ width: 280 }} value={mentiLink} onChange={e => setMentiLink(e.target.value)} />
