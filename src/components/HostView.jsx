@@ -767,41 +767,34 @@ export default function HostView() {
 
               <div className={styles.settingsGroup}>
                 <div className={styles.settingsGroupTitle}>Spy Missions</div>
-                {(spyMissions || []).map((m, mi) => (
-                  <div key={mi} className={styles.settingsRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                    <div className={styles.settingsLabel}>Mission {mi + 1}</div>
-                    <input
-                      className="input"
-                      style={{ width: '100%' }}
-                      placeholder="Mission title"
-                      value={m.title}
-                      onChange={e => {
-                        const v = e.target.value
-                        setSpyMissions(prev => prev.map((x, i) => i === mi ? { ...x, title: v } : x))
-                      }}
-                    />
-                    <textarea
-                      className="input"
-                      style={{ width: '100%', minHeight: 72, resize: 'vertical', fontStyle: 'italic' }}
-                      placeholder="Mission brief shown to the spy…"
-                      value={m.brief}
-                      onChange={e => {
-                        const v = e.target.value
-                        setSpyMissions(prev => prev.map((x, i) => i === mi ? { ...x, brief: v } : x))
-                      }}
-                    />
-                    <button
-                      className="btn btn-red btn-sm"
-                      onClick={() => setSpyMissions(prev => prev.filter((_, i) => i !== mi))}
-                    >
-                      Remove Mission
-                    </button>
-                  </div>
-                ))}
-                <div style={{ padding: '12px 24px' }}>
+                <div style={{ padding: '8px 24px 20px' }}>
+                  {(spyMissions || []).map((m, mi) => (
+                    <div key={mi} style={{ marginBottom: 16, background: 'var(--noir)', border: '0.5px solid var(--border)', borderRadius: 8, padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <span style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)' }}>Mission {mi + 1}</span>
+                        <button onClick={() => setSpyMissions(prev => prev.filter((_, i) => i !== mi))}
+                          style={{ background: 'none', border: '0.5px solid rgba(232,41,26,0.4)', color: '#E8291A', borderRadius: 4, fontSize: 10, padding: '3px 10px', cursor: 'pointer' }}>
+                          Remove
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={m.title}
+                        placeholder="Mission title"
+                        onChange={e => { const v = e.target.value; setSpyMissions(prev => prev.map((x, i) => i === mi ? { ...x, title: v } : x)) }}
+                        style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginBottom: 8, background: '#181818', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 4, color: '#fff', fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 500, padding: '9px 14px', outline: 'none' }}
+                      />
+                      <textarea
+                        value={m.brief}
+                        placeholder="What the spy sees on their screen…"
+                        onChange={e => { const v = e.target.value; setSpyMissions(prev => prev.map((x, i) => i === mi ? { ...x, brief: v } : x)) }}
+                        style={{ display: 'block', width: '100%', boxSizing: 'border-box', background: '#181818', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 4, color: 'rgba(255,255,255,0.7)', fontFamily: 'DM Sans, sans-serif', fontSize: 12, padding: '9px 14px', outline: 'none', minHeight: 80, resize: 'vertical', lineHeight: 1.6, fontStyle: 'italic' }}
+                      />
+                    </div>
+                  ))}
                   <button
-                    className="btn btn-outline btn-sm"
-                    onClick={() => setSpyMissions(prev => [...(prev || []), { title: 'New Mission', brief: 'Describe the mission here…' }])}
+                    onClick={() => setSpyMissions(prev => [...(prev || []), { title: 'New Mission', brief: 'Describe the mission brief here…' }])}
+                    style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C', borderRadius: 4, fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', padding: '8px 18px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
                   >
                     + Add Mission
                   </button>
