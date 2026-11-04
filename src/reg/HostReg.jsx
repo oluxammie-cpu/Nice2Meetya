@@ -13,22 +13,30 @@ const first = n => String(n || '').trim().split(/\s+/)[0]
 const prettyPhone = p => p?.startsWith('234') ? '0' + p.slice(3) : p
 
 /* ─────────── Login ─────────── */
-function Login({ onIn }) {
+// Passwordless: Supabase emails a one-time sign-in link back to this page.
+// Only addresses listed in HOST_EMAILS can see any data once signed in.
+function Login() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
   async function go(e) {
     e.preventDefault(); setErr('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    error ? setErr('Those details did not work.') : onIn()
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/host/ix` },
+    })
+    error ? setErr('Could not send the link. Try again shortly.') : setSent(true)
   }
   return (
     <form className={s.login} onSubmit={go}>
       <p className={s.brand}>NICE2<span>MEETYA!</span></p>
       <p className={s.sub}>Host</p>
-      <input className="input" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input className="input" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-      <button className="btn btn-gold">Sign in</button>
+      {sent
+        ? <p className={s.note}>Check {email} for your sign-in link.</p>
+        : <>
+            <input className="input" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
+            <button className="btn btn-gold">Email me a sign-in link</button>
+          </>}
       {err && <p className={s.err}>{err}</p>}
     </form>
   )
@@ -249,6 +257,8 @@ export default function HostReg() {
   useEffect(() => {
     if (MOCK) return
     supabase.auth.getSession().then(({ data }) => { setAuthed(!!data.session); setChecking(false) })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(!!session))
+    return () => sub.subscription.unsubscribe()
   }, [])
 
   async function act(action, body) {
@@ -262,7 +272,7 @@ export default function HostReg() {
   useEffect(() => { if (authed) act('overview') }, [authed])
 
   if (checking) return null
-  if (!authed) return <div className={s.page}><Login onIn={() => setAuthed(true)} /></div>
+  if (!authed) return <div className={s.page}><Login /></div>
 
   return (
     <div className={s.page}>
