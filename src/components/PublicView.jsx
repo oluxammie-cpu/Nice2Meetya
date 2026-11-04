@@ -1,5 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { PHASES } from '../lib/phases.js'
+
+const EVENING = [
+  { name: 'Arrive',        desc: 'The room is already chosen. You only have to walk in.' },
+  { name: 'Rounds',        desc: 'Structured conversations with people you would not have met otherwise. We move you; you bring yourself.' },
+  { name: 'Dinner',        desc: 'Ordered ahead and served together, so nothing interrupts the talk.' },
+  { name: 'The Afterroom', desc: "The conversation starts at the event. It doesn't end there." },
+]
 import styles from './PublicView.module.css'
 
 export default function PublicView({ goGate }) {
@@ -45,7 +51,7 @@ export default function PublicView({ goGate }) {
           NICE2<span>MEETYA!</span>
         </h1>
         <p className={`${styles.tagline} fade-up delay-2`}>
-          Where games open doors, and conversations do the rest.
+          A curated encounter for people who have built something.
         </p>
         <div className={`${styles.ctaRow} fade-up delay-3`}>
           <button className="btn btn-gold" onClick={() => goGate('guest')}>
@@ -72,9 +78,9 @@ export default function PublicView({ goGate }) {
             </h2>
           </div>
           <div className={styles.aboutBody}>
-            <p>Nice2Meetya! is an evening designed for people worth knowing to find and connect with each other effortlessly. Games are not the point — they are the permission structure. They lower the stakes, spark the first laugh, and create the conditions for real conversation.</p>
-            <p>Every detail is designed: the pacing, the groupings, the pauses. So you do not have to work hard to connect — you just have to show up.</p>
-            <p>You leave feeling relaxed, seen, and socially fulfilled. Not drained.</p>
+            <p>Nice2Meetya! is for people who have built something with their lives and are ready to be surprised by who else is in the room.</p>
+            <p>Every detail is designed: who sits where, when you move, what you are asked. You do not have to work the room. You only have to show up.</p>
+            <p>You leave having met people you will call again.</p>
           </div>
         </div>
       </section>
@@ -87,7 +93,7 @@ export default function PublicView({ goGate }) {
       <section className={styles.section}>
         <h2 className={styles.flowHeading}>How the evening unfolds</h2>
         <div className={styles.flowGrid}>
-          {PHASES.map((p, i) => (
+          {EVENING.map((p, i) => (
             <div key={i} className={styles.flowStep}>
               <div className={styles.flowNum}>0{i + 1}</div>
               <div className={styles.flowTitle}>{p.name}</div>
@@ -100,23 +106,23 @@ export default function PublicView({ goGate }) {
       {/* COMMUNITY */}
       <div className={styles.communityBand}>
         <h2 className={styles.communityHeadline}>
-          EDITION VII<br />
-          <span>COMING SOON</span>
+          EDITION IX<br />
+          <span>MOMENTUM</span>
         </h2>
-        <p className={styles.communitySub}>Every quarter. Same intention. New faces.</p>
+        <p className={styles.communitySub}>Moving is not the same as going somewhere.</p>
         <div className={styles.badgeRow}>
-          {['Lagos', 'Quarterly', 'Limited Seats'].map(b => (
+          {['Lagos', 'December', 'By invitation'].map(b => (
             <span key={b} className={styles.badge}>{b}</span>
           ))}
         </div>
-        <button className="btn btn-gold" style={{ marginTop: '24px' }} onClick={() => goGate('guest')}>
-          Be Part of It
-        </button>
+        <p className={styles.communitySub} style={{ marginTop: '24px', marginBottom: 0 }}>
+          Seats are by invitation, extended by the people already in the room.
+        </p>
       </div>
 
       <footer className={styles.footer}>
         <span className={styles.footerBrand}>Maison des Nobles</span>
-        <span className={styles.footerCopy}>Nice2Meetya! © 2025</span>
+        <span className={styles.footerCopy}>Nice2Meetya! © {new Date().getFullYear()}</span>
       </footer>
     </div>
   )

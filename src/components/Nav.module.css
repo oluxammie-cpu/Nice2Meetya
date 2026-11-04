@@ -36,7 +36,10 @@
   gap: 10px;
 }
 
+.right :global(.btn) { white-space: nowrap; }
+
 @media (max-width: 600px) {
   .nav { padding: 14px 20px; }
   .brandText { font-size: 18px; }
+  .right .hideSm { display: none; }
 }

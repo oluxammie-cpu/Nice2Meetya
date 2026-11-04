@@ -48,7 +48,7 @@ export default function Nav({ view, goGate, goPublic }) {
       </div>
       <div className={styles.right}>
         {!isGuest && !isHost && (
-          <button className="btn btn-ghost" style={{padding:'8px 16px'}} onClick={() => goGate('guest')}>
+          <button className={`btn btn-ghost ${styles.hideSm}`} style={{padding:'8px 16px'}} onClick={() => goGate('guest')}>
             Tonight's Event
           </button>
         )}
