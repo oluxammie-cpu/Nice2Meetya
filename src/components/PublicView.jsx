@@ -40,7 +40,7 @@ export default function PublicView({ goGate }) {
         <div className={styles.heroBg} />
         <div ref={bokehRef} className={styles.bokehLayer} />
 
-        <p className={`${styles.presenter} fade-up`}>Maison de les nobles presents</p>
+        <p className={`${styles.presenter} fade-up`}>Maison des Nobles presents</p>
         <h1 className={`${styles.wordmark} fade-up delay-1`}>
           NICE2<span>MEETYA!</span>
         </h1>
@@ -115,7 +115,7 @@ export default function PublicView({ goGate }) {
       </div>
 
       <footer className={styles.footer}>
-        <span className={styles.footerBrand}>Maison de les nobles</span>
+        <span className={styles.footerBrand}>Maison des Nobles</span>
         <span className={styles.footerCopy}>Nice2Meetya! © 2025</span>
       </footer>
     </div>

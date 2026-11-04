@@ -7,7 +7,7 @@ import s from './Reg.module.css'
 function Masthead({ edition }) {
   return (
     <header className={s.mast}>
-      <p className={s.presenter}>Maison de les nobles</p>
+      <p className={s.presenter}>Maison des Nobles</p>
       <h1 className={s.wordmark}>NICE2<span>MEETYA!</span></h1>
       {edition && <>
         <p className={s.edition}>{edition.title} · {edition.theme}</p>
