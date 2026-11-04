@@ -1,0 +1,10 @@
+project_id = "fhguzgtaxhytqftjprzq"
+
+[functions.registration]
+verify_jwt = false
+
+[functions.registration-host]
+verify_jwt = false   # checked inside the function against HOST_EMAILS
+
+[functions.paystack-webhook]
+verify_jwt = false   # Paystack signs requests with HMAC instead
